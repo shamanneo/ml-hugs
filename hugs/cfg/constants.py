@@ -6,7 +6,7 @@
 import numpy as np
 
 
-SMPL_PATH = 'data/smpl'
+SMPL_PATH = '../datasets/data'
 
 AMASS_SMPLH_TO_SMPL_JOINTS = np.arange(0,156).reshape((-1,3))[[
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
@@ -14,4 +14,4 @@ AMASS_SMPLH_TO_SMPL_JOINTS = np.arange(0,156).reshape((-1,3))[[
     19, 20, 21, 22, 37
 ]].reshape(-1)
 
-NEUMAN_PATH = 'data/neuman/dataset'
+NEUMAN_PATH = '../datasets/data/neuman/dataset'

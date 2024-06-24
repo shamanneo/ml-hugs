@@ -58,7 +58,7 @@ class DeformationDecoder(torch.nn.Module):
             act_fn_dict[act],
         )
         self.skinning_linear = nn.Linear(hidden_dim, hidden_dim)
-        self.skinning = nn.Linear(hidden_dim, 24)
+        self.skinning = nn.Linear(hidden_dim, 55)
         
         if weight_norm:
             self.skinning_linear = nn.utils.weight_norm(self.skinning_linear)

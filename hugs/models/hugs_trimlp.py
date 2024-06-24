@@ -34,6 +34,7 @@ from .modules.smpl_layer import SMPL
 from .modules.triplane import TriPlane
 from .modules.decoders import AppearanceDecoder, DeformationDecoder, GeometryDecoder
 
+from hugs.models.modules.body_models import create
 
 SCALE_Z = 1e-5
 
@@ -72,6 +73,7 @@ class HUGS_TRIMLP:
         disable_posedirs=False,
         triplane_res=256,
         betas=None,
+        body_model_type = "smpl"
     ):
         self.only_rgb = only_rgb
         self.active_sh_degree = 0
@@ -106,12 +108,13 @@ class HUGS_TRIMLP:
         self.geometry_dec = GeometryDecoder(n_features=n_features*3, use_surface=use_surface).to('cuda')
         
         if n_subdivision > 0:
-            logger.info(f"Subdividing SMPL model {n_subdivision} times")
-            self.smpl_template = subdivide_smpl_model(smoothing=True, n_iter=n_subdivision).to(self.device)
+            logger.info(f"Subdividing {body_model_type} model {n_subdivision} times")
+            self.smpl_template = subdivide_smpl_model(smoothing=True, n_iter=n_subdivision, 
+                                                      body_model_type = body_model_type).to(self.device)
         else:
-            self.smpl_template = SMPL(SMPL_PATH).to(self.device)
+            self.smpl_template = create(SMPL_PATH, body_model_type).to(self.device)
             
-        self.smpl = SMPL(SMPL_PATH).to(self.device)
+        self.smpl = create(SMPL_PATH, body_model_type).to(self.device)
             
         edges = trimesh.Trimesh(
             vertices=self.smpl_template.v_template.detach().cpu().numpy(), 
@@ -283,7 +286,7 @@ class HUGS_TRIMLP:
         
         if hasattr(self, 'body_pose') and body_pose is None:
             body_pose = rotation_6d_to_axis_angle(
-                self.body_pose[dataset_idx].reshape(-1, 6)).reshape(23*3)
+                self.body_pose[dataset_idx].reshape(-1, 6)).reshape(21*3)
             
         if hasattr(self, 'betas') and betas is None:
             betas = self.betas
@@ -562,7 +565,7 @@ class HUGS_TRIMLP:
 
     @torch.no_grad()
     def get_vitruvian_verts(self):
-        vitruvian_pose = torch.zeros(69, dtype=self.smpl.dtype, device=self.device)
+        vitruvian_pose = torch.zeros(self.smpl.NUM_BODY_JOINTS * 3, dtype=self.smpl.dtype, device=self.device)
         vitruvian_pose[2] = 1.0
         vitruvian_pose[5] = -1.0
         smpl_output = self.smpl(body_pose=vitruvian_pose[None], betas=self.betas[None], disable_posedirs=False)
@@ -578,7 +581,7 @@ class HUGS_TRIMLP:
     
     @torch.no_grad()
     def get_vitruvian_verts_template(self):
-        vitruvian_pose = torch.zeros(69, dtype=self.smpl_template.dtype, device=self.device)
+        vitruvian_pose = torch.zeros(self.smpl_template.NUM_BODY_JOINTS * 3, dtype=self.smpl_template.dtype, device=self.device)
         vitruvian_pose[2] = 1.0
         vitruvian_pose[5] = -1.0
         smpl_output = self.smpl_template(body_pose=vitruvian_pose[None], betas=self.betas[None], disable_posedirs=False)

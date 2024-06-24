@@ -110,12 +110,13 @@ class GaussianTrainer():
                     use_deformer=cfg.human.use_deformer,
                     disable_posedirs=cfg.human.disable_posedirs,
                     triplane_res=cfg.human.triplane_res,
-                    betas=init_betas[0]
+                    betas=init_betas[0],
+                    body_model_type=cfg.body_model_type
                 )
                 self.human_gs.create_betas(init_betas[0], cfg.human.optim_betas)
                 if not cfg.eval:
                     self.human_gs.initialize()
-                    self.human_gs = optimize_init(self.human_gs, num_steps=7000)
+                    self.human_gs = optimize_init(self.human_gs, num_steps=2)
         
         if cfg.mode in ['scene', 'human_scene']:
             self.scene_gs = SceneGS(

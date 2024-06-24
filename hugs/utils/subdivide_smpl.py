@@ -11,6 +11,7 @@ from trimesh.geometry import faces_to_edges
 
 
 from hugs.models.modules.smpl_layer import SMPL
+from hugs.models.modules.body_models import create, get_num_vertics
 
 
 def subdivide(
@@ -71,7 +72,7 @@ def subdivide(
     return new_vertices, new_faces, new_attributes   
 
 
-def _subdivide_smpl_model(smpl=None, smoothing=False):     
+def _subdivide_smpl_model(smpl=None, smoothing=False, model_path = None, body_model_type = None):     
     if smpl is None:         
         smpl = SMPL("data/smpl")     
              
@@ -107,10 +108,10 @@ def _subdivide_smpl_model(smpl=None, smoothing=False):
         )        
         sub_vertices = sub_mesh.vertices
                        
-    new_smpl = SMPL("data/smpl")     
+    new_smpl = create(model_path, body_model_type)
     new_smpl.lbs_weights = torch.from_numpy(attr["lbs_weights"]).float()
     posedirs = np.zeros((207, sub_vertices.shape[0] * 3)).astype(np.float32)
-    shapedirs = attr["shapedirs"].reshape(-1, 3, 10)
+    shapedirs = attr["shapedirs"].reshape(-1, 3, smpl.num_betas)
     J_regressor = np.zeros_like(attr["J_regressor"].transpose(1, 0))
     J_regressor[:, :n_verts] = smpl.J_regressor
     new_smpl.posedirs = torch.from_numpy(posedirs).float()
@@ -123,12 +124,11 @@ def _subdivide_smpl_model(smpl=None, smoothing=False):
     return new_smpl    
 
 
-def subdivide_smpl_model(smpl=None, smoothing=False, n_iter=1):     
+def subdivide_smpl_model(smpl=None, smoothing=False, n_iter=1, body_model_type="smpl"):     
     if smpl is None:         
         from hugs.cfg.constants import SMPL_PATH         
-        smpl = SMPL(SMPL_PATH)          
-    
-    smpl.v_id = np.arange(6890)[..., None]     
+        smpl = create(SMPL_PATH, body_model_type)          
+    smpl.v_id = np.arange(get_num_vertics(body_model_type))[..., None]     
     for _ in range(n_iter):         
-        smpl = _subdivide_smpl_model(smpl, smoothing)     
+        smpl = _subdivide_smpl_model(smpl, smoothing, SMPL_PATH, body_model_type)     
     return smpl

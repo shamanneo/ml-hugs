@@ -8,6 +8,7 @@ debug: false
 wandb: false
 eval: false
 bg_color: white
+body_model_type: smplx
 dataset:
   name: neuman
   seq: ["lab", "citron", "seattle", "bike", "jogging", "parkinglot"]
@@ -25,7 +26,7 @@ human:
   name: hugs_trimlp
   ckpt: null
   sh_degree: 0
-  n_subdivision: 2
+  n_subdivision: 0 # for smplx 
   only_rgb: false
   use_surface: false
   use_deformer: true
